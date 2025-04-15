@@ -40,10 +40,10 @@ class CardReaderApp extends StatelessWidget {
 // theme/app_theme.dart
 class AppTheme {
   static final ThemeData lightTheme = ThemeData(
-    primarySwatch: Colors.blue,
+    primarySwatch: Colors.green,
     scaffoldBackgroundColor: Colors.white,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.blue,
+      backgroundColor: Colors.green,
       foregroundColor: Colors.white,
       elevation: 0,
     ),
