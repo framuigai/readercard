@@ -1,4 +1,7 @@
+// main.dart
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart'; //  Import the camera package
+
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/camera_screen.dart';
@@ -10,7 +13,17 @@ import 'screens/about_screen.dart';
 import 'screens/manual_entry_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+// Declare a global camera list so it can be used anywhere in the app
+late List<CameraDescription> cameras;
+
+Future<void> main() async {
+  // Required for using plugins before runApp
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load available cameras into the global variable
+  cameras = await availableCameras();
+
+  // Launch the app
   runApp(const CardReaderApp());
 }
 
@@ -27,11 +40,14 @@ class CardReaderApp extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/home': (context) => const HomeScreen(),
+        '/camera': (context) => const CameraScreen(),
+        '/preview': (context) => const CardPreviewScreen(),
         '/manual-entry': (context) => const ManualEntryScreen(),
       },
     );
   }
 }
+
 
 
 
@@ -62,7 +78,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-       Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/home');
       }
     });
   }
