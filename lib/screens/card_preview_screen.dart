@@ -1,5 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p; // ✅ Use alias to avoid conflict with BuildContext
+import 'package:path_provider/path_provider.dart';
+import '../models/card_contact.dart';
+import '../services/db_helper.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class CardPreviewScreen extends StatefulWidget {
@@ -10,7 +14,7 @@ class CardPreviewScreen extends StatefulWidget {
 }
 
 class _CardPreviewScreenState extends State<CardPreviewScreen> {
-  // TextEditingControllers to hold extracted and editable text
+  // 🧠 Text controllers for form fields
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -24,42 +28,46 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
   @override
   void initState() {
     super.initState();
-    // Delay OCR to after build to access arguments
+
+    // 👇 Delay access to ModalRoute to ensure context is available
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)!.settings.arguments;
-      if (args is String) {
-        imagePath = args;
+      final route = ModalRoute.of(context);
+      if (route?.settings.arguments is String) {
+        setState(() {
+          imagePath = route!.settings.arguments as String;
+        });
         _performOCR(File(imagePath));
+      } else {
+        debugPrint('❗ No valid image path found in route arguments.');
       }
     });
   }
 
-  // 🔍 Perform OCR and populate text fields
+  /// 🔍 Perform OCR and fill form with basic guesses
   Future<void> _performOCR(File imageFile) async {
     final inputImage = InputImage.fromFile(imageFile);
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-    final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-    textRecognizer.close();
+    final recognizedText = await textRecognizer.processImage(inputImage);
+    await textRecognizer.close();
 
-    // Combine all extracted text
-    String extracted = recognizedText.text;
+    final text = recognizedText.text;
 
-    // Try basic matching — optional: enhance with RegEx later
-    _nameController.text = _extractLineContaining(extracted, ['name']);
-    _phoneController.text = _extractLineContaining(extracted, ['+254', '07', 'phone']);
-    _emailController.text = _extractLineContaining(extracted, ['@']);
-    _companyController.text = _extractLineContaining(extracted, ['ltd', 'company', 'inc']);
-    _jobTitleController.text = ''; // Could use a dropdown or prediction later
-    _notesController.text = extracted;
+    // ⛏️ Try extracting key fields using keyword matching
+    _nameController.text = _extractLineContaining(text, ['name']);
+    _phoneController.text = _extractLineContaining(text, ['+254', '07', 'phone']);
+    _emailController.text = _extractLineContaining(text, ['@']);
+    _companyController.text = _extractLineContaining(text, ['ltd', 'company', 'inc']);
+    _jobTitleController.text = '';
+    _notesController.text = text;
 
     setState(() {
       _isProcessing = false;
     });
   }
 
-  // Helper to find a line with keywords
-  String _extractLineContaining(String fullText, List<String> keywords) {
-    final lines = fullText.split('\n');
+  /// 🔍 Helper to extract matching lines from text
+  String _extractLineContaining(String text, List<String> keywords) {
+    final lines = text.split('\n');
     for (final keyword in keywords) {
       final match = lines.firstWhere(
             (line) => line.toLowerCase().contains(keyword.toLowerCase()),
@@ -79,14 +87,14 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
           : ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 🖼️ Display the scanned image
+          // 🖼️ Image display
           Image.file(File(imagePath), height: 200, fit: BoxFit.cover),
           const SizedBox(height: 20),
 
           const Text('Edit Details:', style: TextStyle(fontSize: 18)),
           const SizedBox(height: 8),
 
-          // ✏️ Editable fields pre-filled with OCR text
+          // 🧾 Editable fields
           TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
           TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Phone')),
           TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email')),
@@ -97,18 +105,42 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
             decoration: const InputDecoration(labelText: 'Notes'),
             maxLines: 3,
           ),
-
           const SizedBox(height: 20),
 
-          // ✅ Save Button
+          // 💾 Save contact
           ElevatedButton.icon(
             icon: const Icon(Icons.save),
             label: const Text('Save Contact'),
-            onPressed: () {
-              // TODO: Save the contact using a DB or local storage
+            onPressed: () async {
+              // 📁 Save image file to local storage
+              final dir = await getApplicationDocumentsDirectory();
+              final cardsDir = Directory(p.join(dir.path, 'cards'));
+              if (!await cardsDir.exists()) {
+                await cardsDir.create(recursive: true);
+              }
+
+              final newImagePath = p.join(cardsDir.path, '${DateTime.now().millisecondsSinceEpoch}.jpg');
+              await File(imagePath).copy(newImagePath);
+
+              // 🧠 Save contact data
+              final contact = CardContact(
+                imagePath: newImagePath,
+                name: _nameController.text,
+                phone: _phoneController.text,
+                email: _emailController.text,
+                company: _companyController.text,
+                jobTitle: _jobTitleController.text,
+                notes: _notesController.text,
+              );
+
+              await DBHelper.instance.insertContact(contact);
+
+              // ✅ Show success message
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Contact saved locally!')),
               );
+
+              // 🔁 Return to home
               Navigator.popUntil(context, ModalRoute.withName('/home'));
             },
           ),

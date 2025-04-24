@@ -1,5 +1,6 @@
 class CardContact {
-  final int? id; // Optional database ID field
+  final int? id; // Optional database ID
+  final String imagePath; // NEW: Path to saved image file
   final String name;
   final String phone;
   final String email;
@@ -9,6 +10,7 @@ class CardContact {
 
   CardContact({
     this.id,
+    required this.imagePath,
     required this.name,
     required this.phone,
     required this.email,
@@ -17,10 +19,10 @@ class CardContact {
     required this.notes,
   });
 
-  // Convert object to map for DB storage
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'imagePath': imagePath,
       'name': name,
       'phone': phone,
       'email': email,
@@ -30,10 +32,10 @@ class CardContact {
     };
   }
 
-  // Convert map to object after retrieving from DB
   factory CardContact.fromMap(Map<String, dynamic> map) {
     return CardContact(
       id: map['id'],
+      imagePath: map['imagePath'],
       name: map['name'],
       phone: map['phone'],
       email: map['email'],

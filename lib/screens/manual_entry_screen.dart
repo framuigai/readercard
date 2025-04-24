@@ -26,6 +26,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         company: _companyController.text,
         jobTitle: _jobTitleController.text,
         notes: _notesController.text,
+        imagePath: '',
       );
 
       // TODO: Connect to local DB (e.g. isar or sqflite)

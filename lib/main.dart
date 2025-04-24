@@ -43,6 +43,7 @@ class CardReaderApp extends StatelessWidget {
         '/camera': (context) => const CameraScreen(),
         '/preview': (context) => const CardPreviewScreen(),
         '/manual-entry': (context) => const ManualEntryScreen(),
+        '/cardholder': (context) => const CardholderScreen(),
       },
     );
   }
