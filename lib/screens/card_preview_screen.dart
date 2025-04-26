@@ -1,13 +1,14 @@
+// card_preview_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p; // 🧠 Alias path to avoid conflict
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/card_contact.dart';
 import '../services/db_helper.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class CardPreviewScreen extends StatefulWidget {
-  final String imagePath; // 📸 Path to captured image
+  final String imagePath;
 
   const CardPreviewScreen({Key? key, required this.imagePath}) : super(key: key);
 
@@ -16,7 +17,6 @@ class CardPreviewScreen extends StatefulWidget {
 }
 
 class _CardPreviewScreenState extends State<CardPreviewScreen> {
-  // Controllers for form fields
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -24,8 +24,8 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
   final TextEditingController _jobTitleController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
-  bool _isProcessing = true; // 🔄 While OCR is ongoing
-  bool _isSaving = false; // 🔄 While saving contact
+  bool _isProcessing = true;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -33,7 +33,6 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
     _performOCR(File(widget.imagePath));
   }
 
-  /// 🧠 OCR Scanning Logic
   Future<void> _performOCR(File imageFile) async {
     try {
       final inputImage = InputImage.fromFile(imageFile);
@@ -44,17 +43,15 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
       final text = recognizedText.text.trim();
 
       if (text.isEmpty) {
-        // 🚨 No text detected
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('⚠️ No text detected. Please retake the photo.')),
+            const SnackBar(content: Text('⚠️ No text detected. Retake photo.')),
           );
         }
-        Navigator.pop(context); // Go back to retake
+        Navigator.pop(context);
         return;
       }
 
-      // Populate fields from OCR
       _nameController.text = _extractLineContaining(text, ['name']);
       _phoneController.text = _extractLineContaining(text, ['+254', '07', 'phone']);
       _emailController.text = _extractLineContaining(text, ['@']);
@@ -62,10 +59,9 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
       _jobTitleController.text = '';
       _notesController.text = text;
     } catch (e) {
-      // 🚨 OCR failed (invalid image)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Error processing image. Please try again.')),
+          const SnackBar(content: Text('❌ Error processing image.')),
         );
       }
       Navigator.pop(context);
@@ -76,7 +72,6 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
     }
   }
 
-  /// 🧠 Simple helper to extract a relevant line from OCR output
   String _extractLineContaining(String text, List<String> keywords) {
     final lines = text.split('\n');
     for (final keyword in keywords) {
@@ -89,9 +84,7 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
     return '';
   }
 
-  /// 💾 Save the scanned contact
   Future<void> _saveContact() async {
-    // 🔍 Validate fields before saving
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
@@ -102,14 +95,12 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
       );
       return;
     }
-
     if (email.isNotEmpty && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('⚠️ Enter a valid email address.')),
+        const SnackBar(content: Text('⚠️ Enter a valid email.')),
       );
       return;
     }
-
     if (phone.isNotEmpty && !RegExp(r'^(\+?\d{7,15})$').hasMatch(phone)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('⚠️ Enter a valid phone number.')),
@@ -118,7 +109,7 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
     }
 
     setState(() {
-      _isSaving = true; // Start saving loader
+      _isSaving = true;
     });
 
     try {
@@ -159,7 +150,7 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isSaving = false; // Stop saving loader
+          _isSaving = false;
         });
       }
     }
@@ -170,7 +161,7 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Preview & Edit')),
       body: _isProcessing
-          ? const Center(child: CircularProgressIndicator()) // OCR Loading spinner
+          ? const Center(child: CircularProgressIndicator()) // OCR spinner
           : _isSaving
           ? const Center(child: CircularProgressIndicator()) // Saving spinner
           : ListView(
@@ -180,8 +171,6 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
           const SizedBox(height: 20),
           const Text('Edit Details:', style: TextStyle(fontSize: 18)),
           const SizedBox(height: 16),
-
-          // TextFields with better spacing
           TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
           const SizedBox(height: 16),
           TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Phone')),
@@ -192,13 +181,8 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
           const SizedBox(height: 16),
           TextField(controller: _jobTitleController, decoration: const InputDecoration(labelText: 'Job Title')),
           const SizedBox(height: 16),
-          TextField(
-            controller: _notesController,
-            decoration: const InputDecoration(labelText: 'Notes'),
-            maxLines: 3,
-          ),
+          TextField(controller: _notesController, decoration: const InputDecoration(labelText: 'Notes'), maxLines: 3),
           const SizedBox(height: 30),
-
           ElevatedButton.icon(
             icon: const Icon(Icons.save),
             label: const Text('Save Contact'),

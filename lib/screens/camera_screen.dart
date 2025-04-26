@@ -2,7 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../main.dart'; // Access the global cameras list
+import '../main.dart'; // Access global cameras list
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({Key? key}) : super(key: key);
@@ -39,7 +39,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (!_controller.value.isInitialized) return;
     try {
       final image = await _controller.takePicture();
-      Navigator.pushNamed(context, '/capture-preview', arguments: image.path);
+      Navigator.pushNamed(context, '/capture-preview', arguments: image.path); // ✅ Go to capture preview
     } catch (e) {
       debugPrint('Capture error: $e');
     }
@@ -48,16 +48,16 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final boxWidth = screenWidth * 0.7; // Width of focus box
-    final boxHeight = boxWidth * 0.6;    // Height of focus box
+    final boxWidth = screenWidth * 0.7; // 🎯 Width of focus box
+    final boxHeight = boxWidth * 0.6; // 🎯 Height of focus box
 
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Business Card')),
       body: _isInitialized
           ? Stack(
         children: [
-          CameraPreview(_controller), // 📸 Camera feed
-          _buildFocusOverlay(boxWidth, boxHeight), // 🎯 Sharp Focus Box
+          CameraPreview(_controller), // 📸 Live camera
+          _buildFocusOverlay(boxWidth, boxHeight), // 🎯 Overlay blur with clear center
           Center(
             child: Container(
               width: boxWidth,
@@ -65,6 +65,17 @@ class _CameraScreenState extends State<CameraScreen> {
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.white, width: 2),
                 borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 120,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                "Align the card inside the box",
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           ),
@@ -101,10 +112,10 @@ class _CameraScreenState extends State<CameraScreen> {
         );
 
         return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ✅ Blur around
           child: CustomPaint(
             size: Size(screenWidth, screenHeight),
-            painter: FocusPainter(rect: rect),
+            painter: FocusPainter(rect: rect), // 🎯 Clear center
           ),
         );
       },
@@ -112,7 +123,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 }
 
-// 🎨 Custom Painter for focus area
+// 🎨 Painter for focus clear hole
 class FocusPainter extends CustomPainter {
   final Rect rect;
 
@@ -124,10 +135,10 @@ class FocusPainter extends CustomPainter {
       ..color = Colors.black.withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
-    // Fill the whole screen
+    // Darken the whole screen
     canvas.drawRect(Offset.zero & size, paint);
 
-    // Clear the focus area (sharp center)
+    // Clear the focus area
     paint.blendMode = BlendMode.clear;
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(12)),

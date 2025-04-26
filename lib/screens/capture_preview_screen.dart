@@ -12,24 +12,21 @@ class CapturePreviewScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Preview Capture'),
-        centerTitle: true, // 🎯 Centered title for cleaner UI
+        centerTitle: true,
       ),
       body: Column(
         children: [
-          // 🖼️ Display captured image
           Expanded(
             child: Container(
               width: double.infinity,
               color: Colors.black,
               child: Image.file(
                 File(imagePath),
-                fit: BoxFit.contain, // 👌 Better fit for business cards
+                fit: BoxFit.contain,
               ),
             ),
           ),
           const SizedBox(height: 20),
-
-          // 🧩 Action buttons: Retake or Use
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
             child: Row(
@@ -44,7 +41,7 @@ class CapturePreviewScreen extends StatelessWidget {
                     label: const Text('Retake'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: Colors.redAccent, // ❌ Retake = red color
+                      backgroundColor: Colors.redAccent, // ❌ Retake = Red
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -58,24 +55,16 @@ class CapturePreviewScreen extends StatelessWidget {
                       Navigator.pushReplacementNamed(
                         context,
                         '/preview',
-                        arguments: imagePath,
+                        arguments: imagePath, // ✅ Pass image path
                       );
                     },
                     icon: const Icon(Icons.check_circle_outline),
                     label: const Text('Use Photo'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: Colors.green, // ✅ Use = green color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
                   ),
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 20),
         ],
       ),
