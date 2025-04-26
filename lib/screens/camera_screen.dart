@@ -1,6 +1,8 @@
+// camera_screen.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../main.dart'; // To access the global `cameras` list
+import '../main.dart'; // Access the global cameras list
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({Key? key}) : super(key: key);
@@ -16,60 +18,65 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Initialize the camera with the first (usually back) camera
     _controller = CameraController(cameras.first, ResolutionPreset.medium);
     _controller.initialize().then((_) {
       if (!mounted) return;
       setState(() {
         _isInitialized = true;
       });
+    }).catchError((e) {
+      debugPrint('Camera error: $e');
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose(); // Free camera resources
+    _controller.dispose();
     super.dispose();
   }
 
   void _captureImage() async {
     if (!_controller.value.isInitialized) return;
-
     try {
       final image = await _controller.takePicture();
-      Navigator.pushNamed(context, '/preview', arguments: image.path);
+      Navigator.pushNamed(context, '/capture-preview', arguments: image.path);
     } catch (e) {
-      // Optional: show error to user
+      debugPrint('Capture error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final boxWidth = screenWidth * 0.7; // Width of focus box
+    final boxHeight = boxWidth * 0.6;    // Height of focus box
+
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Business Card')),
       body: _isInitialized
           ? Stack(
         children: [
-          CameraPreview(_controller), // 🔍 Camera feed
+          CameraPreview(_controller), // 📸 Camera feed
+          _buildFocusOverlay(boxWidth, boxHeight), // 🎯 Sharp Focus Box
           Center(
             child: Container(
-              width: 250,
-              height: 150,
+              width: boxWidth,
+              height: boxHeight,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.white, width: 2),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
           Positioned(
-            bottom: 30,
+            bottom: 40,
             left: 0,
             right: 0,
             child: Center(
-              child: FloatingActionButton(
+              child: ElevatedButton.icon(
                 onPressed: _captureImage,
-                child: const Icon(Icons.camera_alt),
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Capture'),
               ),
             ),
           ),
@@ -78,4 +85,56 @@ class _CameraScreenState extends State<CameraScreen> {
           : const Center(child: CircularProgressIndicator()),
     );
   }
+
+  Widget _buildFocusOverlay(double boxWidth, double boxHeight) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final screenHeight = constraints.maxHeight;
+        final centerX = screenWidth / 2;
+        final centerY = screenHeight / 2;
+
+        final rect = Rect.fromCenter(
+          center: Offset(centerX, centerY),
+          width: boxWidth,
+          height: boxHeight,
+        );
+
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: CustomPaint(
+            size: Size(screenWidth, screenHeight),
+            painter: FocusPainter(rect: rect),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// 🎨 Custom Painter for focus area
+class FocusPainter extends CustomPainter {
+  final Rect rect;
+
+  FocusPainter({required this.rect});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black.withOpacity(0.5)
+      ..style = PaintingStyle.fill;
+
+    // Fill the whole screen
+    canvas.drawRect(Offset.zero & size, paint);
+
+    // Clear the focus area (sharp center)
+    paint.blendMode = BlendMode.clear;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(12)),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

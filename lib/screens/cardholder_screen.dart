@@ -1,8 +1,9 @@
+// cardholder_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/card_contact.dart';
 import '../services/db_helper.dart';
-import 'card_details_screen.dart'; // 🆕 Ensure this import exists
+import 'card_details_screen.dart'; // 🆕 Make sure this import exists
 
 class CardholderScreen extends StatefulWidget {
   const CardholderScreen({Key? key}) : super(key: key);
@@ -13,33 +14,35 @@ class CardholderScreen extends StatefulWidget {
 
 class _CardholderScreenState extends State<CardholderScreen> {
   late Future<List<CardContact>> _contactsFuture;
-  List<CardContact> _allContacts = []; // Holds all fetched contacts
-  List<CardContact> _filteredContacts = []; // Filtered list for display
-  final TextEditingController _searchController = TextEditingController(); // 🔍 Search input controller
+  List<CardContact> _allContacts = []; // Holds all contacts from DB
+  List<CardContact> _filteredContacts = []; // Filtered contacts based on search
+  final TextEditingController _searchController = TextEditingController(); // 🔍 Controller for search bar
 
   @override
   void initState() {
     super.initState();
-    _loadContacts(); // 🔄 Load contacts on start
-    _searchController.addListener(_onSearchChanged); // 📝 Listen for search input
+    _loadContacts(); // Initial loading
+    _searchController.addListener(_onSearchChanged); // Listen for search typing
   }
 
   @override
   void dispose() {
-    _searchController.dispose(); // 🧹 Dispose controller
+    _searchController.dispose();
     super.dispose();
   }
 
+  // 🗂️ Fetch contacts from local DB
   void _loadContacts() {
     _contactsFuture = DBHelper.instance.getAllContacts();
     _contactsFuture.then((contacts) {
       setState(() {
         _allContacts = contacts;
-        _filteredContacts = contacts; // By default, show all
+        _filteredContacts = contacts; // Initially show all
       });
     });
   }
 
+  // 🔍 Handle search logic
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -51,7 +54,7 @@ class _CardholderScreenState extends State<CardholderScreen> {
     });
   }
 
-  // 🚀 Navigate to details page and refresh after return
+  // 🚀 Navigate to CardDetailsScreen when a card is tapped
   Future<void> _navigateToDetails(CardContact contact) async {
     final updated = await Navigator.push(
       context,
@@ -60,14 +63,16 @@ class _CardholderScreenState extends State<CardholderScreen> {
       ),
     );
     if (updated == true) {
-      _loadContacts(); // Refresh if updated or deleted
+      _loadContacts(); // Refresh if contact edited or deleted
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Saved Business Cards')),
+      appBar: AppBar(
+        title: const Text('Saved Business Cards'),
+      ),
       body: Column(
         children: [
           // 🔎 Search Bar
@@ -75,47 +80,81 @@ class _CardholderScreenState extends State<CardholderScreen> {
             padding: const EdgeInsets.all(12.0),
             child: TextField(
               controller: _searchController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search by name, email, or company',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                prefixIcon: Icon(Icons.search),
               ),
             ),
           ),
 
-          // 🔄 Contacts List
+          // 🧾 Card List
           Expanded(
-            child: _filteredContacts.isEmpty
-                ? const Center(child: Text('No matching contacts found.'))
-                : ListView.builder(
-              itemCount: _filteredContacts.length,
-              itemBuilder: (context, index) {
-                final contact = _filteredContacts[index];
+            child: FutureBuilder<List<CardContact>>(
+              future: _contactsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('⚠️ Error loading contacts.'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No cards saved yet.'));
+                }
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: ListTile(
-                    leading: File(contact.imagePath).existsSync()
-                        ? Image.file(
-                      File(contact.imagePath),
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                    )
-                        : const Icon(Icons.broken_image, size: 50),
-                    title: Text(contact.name),
-                    subtitle: Text('${contact.jobTitle}\n${contact.email}'),
-                    isThreeLine: true,
-                    onTap: () => _navigateToDetails(contact),
-                  ),
-                );
+                return _buildContactList();
               },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // 🖼️ Build the cards nicely
+  Widget _buildContactList() {
+    return ListView.builder(
+      itemCount: _filteredContacts.length,
+      itemBuilder: (context, index) {
+        final contact = _filteredContacts[index];
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          elevation: 3,
+          child: ListTile(
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: File(contact.imagePath).existsSync()
+                  ? Image.file(
+                File(contact.imagePath),
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+              )
+                  : const Icon(Icons.broken_image, size: 60),
+            ),
+            title: Text(
+              contact.name,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  contact.jobTitle,
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  contact.email,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+            isThreeLine: true,
+            onTap: () => _navigateToDetails(contact),
+          ),
+        );
+      },
     );
   }
 }

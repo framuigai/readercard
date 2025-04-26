@@ -1,3 +1,4 @@
+// card_details_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/card_contact.dart';
@@ -5,6 +6,7 @@ import '../services/db_helper.dart';
 
 class CardDetailsScreen extends StatefulWidget {
   final CardContact contact;
+
   const CardDetailsScreen({Key? key, required this.contact}) : super(key: key);
 
   @override
@@ -19,11 +21,12 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
   late TextEditingController _jobTitleController;
   late TextEditingController _notesController;
 
-  bool _isEditing = false; // ✍️ Start in read-only mode
+  bool _isEditing = false; // ✏️ Initially read-only
 
   @override
   void initState() {
     super.initState();
+    // 🧠 Initialize controllers with contact data
     _nameController = TextEditingController(text: widget.contact.name);
     _phoneController = TextEditingController(text: widget.contact.phone);
     _emailController = TextEditingController(text: widget.contact.email);
@@ -34,6 +37,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
 
   @override
   void dispose() {
+    // 🧹 Clean up controllers
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
@@ -43,9 +47,9 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
     super.dispose();
   }
 
-  // ✅ Save edited contact to DB
+  /// ✅ Save edited data to the DB
   Future<void> _saveChanges() async {
-    final updated = CardContact(
+    final updatedContact = CardContact(
       id: widget.contact.id,
       imagePath: widget.contact.imagePath,
       name: _nameController.text,
@@ -55,14 +59,16 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
       jobTitle: _jobTitleController.text,
       notes: _notesController.text,
     );
-    await DBHelper.instance.updateContact(updated);
+
+    await DBHelper.instance.updateContact(updatedContact);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contact updated.')),
+      const SnackBar(content: Text('Contact updated successfully!')),
     );
-    Navigator.pop(context, true); // ✅ Signal refresh
+
+    Navigator.pop(context, true); // Return true to refresh list
   }
 
-  // 🗑️ Confirm delete then remove contact
+  /// 🗑️ Confirm delete with dialog
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -79,18 +85,23 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
     if (confirmed == true) {
       await DBHelper.instance.deleteContact(widget.contact.id!);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contact deleted.')),
+        const SnackBar(content: Text('Contact deleted successfully.')),
       );
-      Navigator.pop(context, true); // ✅ Signal refresh
+      Navigator.pop(context, true); // Return true to refresh list
     }
   }
 
+  // 🧾 Build each input field
   Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1}) {
-    return TextField(
+    return TextFormField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
       maxLines: maxLines,
       enabled: _isEditing,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      style: const TextStyle(fontSize: 16),
     );
   }
 
@@ -102,6 +113,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
         actions: [
           IconButton(
             icon: Icon(_isEditing ? Icons.check : Icons.edit),
+            tooltip: _isEditing ? 'Save' : 'Edit',
             onPressed: () {
               if (_isEditing) {
                 _saveChanges();
@@ -112,6 +124,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete),
+            tooltip: 'Delete',
             onPressed: _confirmDelete,
           ),
         ],
@@ -119,17 +132,32 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 🖼️ Display image
+          // 🖼️ Image Display
           File(widget.contact.imagePath).existsSync()
-              ? Image.file(File(widget.contact.imagePath), height: 200, fit: BoxFit.cover)
+              ? ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(
+              File(widget.contact.imagePath),
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          )
               : const Icon(Icons.broken_image, size: 100),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+
+          // ✏️ Form Fields
           _buildTextField('Name', _nameController),
+          const SizedBox(height: 12),
           _buildTextField('Phone', _phoneController),
+          const SizedBox(height: 12),
           _buildTextField('Email', _emailController),
+          const SizedBox(height: 12),
           _buildTextField('Company', _companyController),
+          const SizedBox(height: 12),
           _buildTextField('Job Title', _jobTitleController),
+          const SizedBox(height: 12),
           _buildTextField('Notes', _notesController, maxLines: 3),
         ],
       ),

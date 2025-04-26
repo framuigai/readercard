@@ -1,3 +1,4 @@
+// home_screen.dart
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -6,71 +7,107 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 🏡 App Bar
       appBar: AppBar(
         title: const Text('CardReader'),
+        centerTitle: true,
       ),
+
+      // 📋 Drawer Menu
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            // 🎨 Drawer Header
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 color: Colors.blue,
               ),
-              child: Text(
-                'CardReader',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.credit_card, color: Colors.white, size: 48),
+                  SizedBox(height: 10),
+                  Text(
+                    'CardReader',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
+
+            // 📚 Menu Items
+            _buildDrawerItem(
+              icon: Icons.home,
+              text: 'Home',
               onTap: () => Navigator.pushReplacementNamed(context, '/home'),
             ),
-            ListTile(
-              leading: const Icon(Icons.contact_page),
-              title: const Text('Cardholder'),
+            _buildDrawerItem(
+              icon: Icons.contact_page,
+              text: 'Cardholder',
               onTap: () => Navigator.pushNamed(context, '/cardholder'),
             ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
+            _buildDrawerItem(
+              icon: Icons.settings,
+              text: 'Settings',
               onTap: () => Navigator.pushNamed(context, '/settings'),
             ),
-            ListTile(
-              leading: const Icon(Icons.star),
-              title: const Text('Premium'),
+            _buildDrawerItem(
+              icon: Icons.star,
+              text: 'Premium',
               onTap: () => Navigator.pushNamed(context, '/premium'),
             ),
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('About'),
+            _buildDrawerItem(
+              icon: Icons.info,
+              text: 'About',
               onTap: () => Navigator.pushNamed(context, '/about'),
             ),
           ],
         ),
       ),
+
+      // 📸 Main Action Buttons
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Scan Business Card'),
-              onPressed: () => Navigator.pushNamed(context, '/camera'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.edit),
-              label: const Text('Enter Manually'),
-              onPressed: () => Navigator.pushNamed(context, '/manual-entry'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50), // Make button wider
+                ),
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Scan Business Card'),
+                onPressed: () => Navigator.pushNamed(context, '/camera'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                ),
+                icon: const Icon(Icons.edit),
+                label: const Text('Enter Card Manually'),
+                onPressed: () => Navigator.pushNamed(context, '/manual-entry'),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  // 🔧 Helper method for drawer items
+  Widget _buildDrawerItem({required IconData icon, required String text, required VoidCallback onTap}) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(text),
+      onTap: onTap,
     );
   }
 }
