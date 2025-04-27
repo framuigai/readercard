@@ -61,7 +61,7 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Error processing image.')),
+          const SnackBar(content: Text('Error processing image.')),
         );
       }
       Navigator.pop(context);
@@ -137,14 +137,14 @@ class _CardPreviewScreenState extends State<CardPreviewScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Contact saved successfully!')),
+          const SnackBar(content: Text('Contact saved successfully!')),
         );
         Navigator.popUntil(context, ModalRoute.withName('/home'));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Failed to save contact.')),
+          const SnackBar(content: Text('Failed to save contact.')),
         );
       }
     } finally {

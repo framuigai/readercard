@@ -38,6 +38,7 @@ class DBHelper {
     ''');
   }
 
+
   // Insert a new card into DB
   Future<int> insertContact(CardContact contact) async {
     final db = await instance.database;
@@ -51,7 +52,7 @@ class DBHelper {
     return result.map((map) => CardContact.fromMap(map)).toList();
   }
 
-  // ✅ Update a contact by ID
+  //  Update a contact by ID
   Future<int> updateContact(CardContact contact) async {
     final db = await instance.database;
     return await db.update(
@@ -62,7 +63,7 @@ class DBHelper {
     );
   }
 
-  // 🗑️ Delete a contact by ID
+  //  Delete a contact by ID
   Future<int> deleteContact(int id) async {
     final db = await instance.database;
     return await db.delete(
