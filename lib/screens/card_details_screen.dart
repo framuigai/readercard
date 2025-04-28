@@ -1,6 +1,7 @@
 // card_details_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart'; // ➕ Import Share package
 import '../models/card_contact.dart';
 import '../services/db_helper.dart';
 
@@ -91,7 +92,28 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
     }
   }
 
-  // 🧾 Build each input field
+  /// 📤 Share contact via Share Plus
+  Future<void> _shareContact() async {
+    final String shareText = '''
+📇 Contact Details:
+Name: ${_nameController.text}
+Phone: ${_phoneController.text}
+Email: ${_emailController.text}
+Company: ${_companyController.text}
+Job Title: ${_jobTitleController.text}
+Notes: ${_notesController.text}
+    ''';
+
+    try {
+      await Share.share(shareText, subject: 'Business Card Contact');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Failed to share contact.')),
+      );
+    }
+  }
+
+  /// 🧾 Build each input field
   Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1}) {
     return TextFormField(
       controller: controller,
@@ -111,6 +133,11 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> {
       appBar: AppBar(
         title: const Text('Card Details'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Share',
+            onPressed: _shareContact, // 📤 Share action
+          ),
           IconButton(
             icon: Icon(_isEditing ? Icons.check : Icons.edit),
             tooltip: _isEditing ? 'Save' : 'Edit',
