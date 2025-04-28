@@ -14,15 +14,16 @@ class CardholderScreen extends StatefulWidget {
 
 class _CardholderScreenState extends State<CardholderScreen> {
   late Future<List<CardContact>> _contactsFuture;
-  List<CardContact> _allContacts = []; // Holds all contacts from DB
-  List<CardContact> _filteredContacts = []; // Filtered contacts based on search
+  List<CardContact> _allContacts = []; // 🗂️ Holds all contacts from DB
+  List<CardContact> _filteredContacts = []; // 🔎 Filtered contacts based on search
   final TextEditingController _searchController = TextEditingController(); // 🔍 Controller for search bar
+  String _sortOption = 'Newest First'; // 📋 Current selected sort option
 
   @override
   void initState() {
     super.initState();
-    _loadContacts(); // Initial loading
-    _searchController.addListener(_onSearchChanged); // Listen for search typing
+    _loadContacts(); // 🚀 Initial loading
+    _searchController.addListener(_onSearchChanged); // 📻 Listen for search typing
   }
 
   @override
@@ -37,12 +38,12 @@ class _CardholderScreenState extends State<CardholderScreen> {
     _contactsFuture.then((contacts) {
       setState(() {
         _allContacts = contacts;
-        _filteredContacts = contacts; // Initially show all
+        _applySorting(); // 🧠 Apply sort immediately after loading
       });
     });
   }
 
-  // 🔍 Handle search logic
+  // 🔎 Handle search logic
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -54,6 +55,17 @@ class _CardholderScreenState extends State<CardholderScreen> {
     });
   }
 
+  // 🧠 Handle sorting logic
+  void _applySorting() {
+    if (_sortOption == 'Newest First') {
+      _allContacts.sort((a, b) => b.id!.compareTo(a.id!)); // Descending ID (newest)
+    } else if (_sortOption == 'Oldest First') {
+      _allContacts.sort((a, b) => a.id!.compareTo(b.id!)); // Ascending ID (oldest)
+    }
+    _filteredContacts = List.from(_allContacts); // Reset filtered list after sorting
+    _onSearchChanged(); // Apply search filter after sort
+  }
+
   // 🚀 Navigate to CardDetailsScreen when a card is tapped
   Future<void> _navigateToDetails(CardContact contact) async {
     final updated = await Navigator.push(
@@ -63,7 +75,7 @@ class _CardholderScreenState extends State<CardholderScreen> {
       ),
     );
     if (updated == true) {
-      _loadContacts(); // Refresh if contact edited or deleted
+      _loadContacts(); // 🔄 Refresh if contact edited or deleted
     }
   }
 
@@ -72,6 +84,34 @@ class _CardholderScreenState extends State<CardholderScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Saved Business Cards'),
+        actions: [
+          // 🧩 Sort dropdown menu
+          DropdownButton<String>(
+            value: _sortOption,
+            underline: Container(),
+            icon: const Icon(Icons.sort, color: Colors.white),
+            dropdownColor: Colors.blue.shade50,
+            items: const [
+              DropdownMenuItem(
+                value: 'Newest First',
+                child: Text('Newest First'),
+              ),
+              DropdownMenuItem(
+                value: 'Oldest First',
+                child: Text('Oldest First'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _sortOption = value;
+                  _applySorting(); // 🔄 Apply sorting when changed
+                });
+              }
+            },
+          ),
+          const SizedBox(width: 12),
+        ],
       ),
       body: Column(
         children: [
@@ -83,6 +123,7 @@ class _CardholderScreenState extends State<CardholderScreen> {
               decoration: const InputDecoration(
                 hintText: 'Search by name, email, or company',
                 prefixIcon: Icon(Icons.search),
+                filled: true,
               ),
             ),
           ),
@@ -96,8 +137,8 @@ class _CardholderScreenState extends State<CardholderScreen> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return const Center(child: Text('⚠️ Error loading contacts.'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No cards saved yet.'));
+                } else if (_filteredContacts.isEmpty) {
+                  return _buildNoResults(); // 🆕 Friendly no result
                 }
 
                 return _buildContactList();
@@ -109,7 +150,7 @@ class _CardholderScreenState extends State<CardholderScreen> {
     );
   }
 
-  // 🖼️ Build the cards nicely
+  // 🖼️ Build the contact list nicely
   Widget _buildContactList() {
     return ListView.builder(
       itemCount: _filteredContacts.length,
@@ -155,6 +196,23 @@ class _CardholderScreenState extends State<CardholderScreen> {
           ),
         );
       },
+    );
+  }
+
+  // 🧸 Friendly "No results" screen
+  Widget _buildNoResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.search_off, size: 80, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'No matching contacts found.',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 }
