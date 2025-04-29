@@ -9,9 +9,10 @@ import 'screens/card_preview_screen.dart';    // ✅ Correctly import
 import 'screens/cardholder_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/premium_screen.dart';
-import 'screens/about_screen.dart';
 import 'screens/manual_entry_screen.dart';
 import 'theme/app_theme.dart';
+import 'screens/about_screen.dart';          // 🆕 About
+import 'screens/privacy_policy.dart';        // 🆕 Privacy Policy
 
 // Declare a global camera list
 late List<CameraDescription> cameras;
@@ -38,6 +39,9 @@ class CardReaderApp extends StatelessWidget {
         '/camera': (context) => const CameraScreen(),
         '/manual-entry': (context) => const ManualEntryScreen(),
         '/cardholder': (context) => const CardholderScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/about': (context) => const AboutScreen(),             // 🆕 Added
+        '/privacy-policy': (context) => const PrivacyPolicyScreen(), // 🆕 Added
       },
       // Handle screens needing arguments separately
       onGenerateRoute: (settings) {
@@ -53,6 +57,15 @@ class CardReaderApp extends StatelessWidget {
             builder: (context) => CardPreviewScreen(imagePath: path),
           );
         }
+
+        // ✅ 🆕 Handle About and Privacy Policy screens
+        if (settings.name == '/about') {
+          return MaterialPageRoute(builder: (context) => const AboutScreen());
+        }
+        if (settings.name == '/privacy-policy') {
+          return MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen());
+        }
+
         return null;
       },
     );
